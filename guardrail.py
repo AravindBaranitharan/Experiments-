@@ -1,7 +1,7 @@
 """
 guardrail.py
 
-Guardrails for an AI + Cloud + DevOps Agent.
+Guardrails for an AI + Cloud + DevOps Agent..
 
 This module validates user requests before they are sent to an AI agent
 or DevOps tools, and sanitizes AI responses before returning them.

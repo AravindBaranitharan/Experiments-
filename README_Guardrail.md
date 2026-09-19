@@ -1,6 +1,6 @@
 # AI Cloud & DevOps Agent – Guardrail Module
 
-## 1. Purpose
+## 1. Purposes
 
 `guardrail.py` is an application-level security and policy layer for an
 AI agent that works with Cloud and DevOps systems.
