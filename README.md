@@ -17,6 +17,8 @@ question -> input guardrail -> semantic search (Chroma) -> grounding gate -> LLM
 | `src/generation/` | System prompt, context builder, LLM factory, the RAG chain |
 | `src/config.py` | All settings, read from environment / `.env` |
 | `src/cli.py` | Command-line chatbot |
+| `src/api.py` | HTTP API (FastAPI) used by the web UI |
+| `web/` | Next.js + Tailwind chat UI (see `web/README.md`) |
 | `tests/` | `pytest` suite (runs offline; no API key needed) |
 | `docs/` | Notes for the knowledge base and the original guardrail |
 
@@ -38,6 +40,10 @@ python -m src.retrieval.search "how do I store files in the cloud?"   # semantic
 python -m src.cli "What is Amazon S3?"                                # full chatbot (needs the API key)
 python -m src.cli                                                     # interactive
 python -m pytest
+
+# web UI: API in one terminal, UI in another
+uvicorn src.api:app --port 8000
+cd web && npm install && npm run dev      # http://localhost:3000
 ```
 
 ## How the guardrails work
