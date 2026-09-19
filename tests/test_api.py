@@ -4,6 +4,8 @@ from langchain_core.documents import Document
 from langchain_core.runnables import RunnableLambda
 
 from src.api import create_app
+from src.config import get_settings
+from src.knowledge_base import KnowledgeBaseLoader
 from src.generation.prompts import NO_ANSWER
 from src.guardrails import GuardrailViolation, validate_input
 
@@ -13,6 +15,7 @@ def _doc(entry_id, relevance=0.9, candidates=9, reranked=True):
 
 
 received: list = []
+ENTRY_COUNT = len(KnowledgeBaseLoader(get_settings().data_dir).load_entries().entries)   # grows with the knowledge base
 
 
 def _client(reply=None, docs=(), error=None, *, guard=False, verification=None, summary=None, standalone=None):
@@ -37,7 +40,7 @@ def _client(reply=None, docs=(), error=None, *, guard=False, verification=None, 
 def test_health_reports_the_loaded_knowledge_base():
     with _client("x") as client:
         body = client.get("/api/health").json()
-    assert body["status"] == "ok" and body["entries"] == 62
+    assert body["status"] == "ok" and body["entries"] == ENTRY_COUNT
 
 
 def test_an_answer_comes_back_with_the_sources_it_cited_and_how_it_was_found():
@@ -50,7 +53,7 @@ def test_an_answer_comes_back_with_the_sources_it_cited_and_how_it_was_found():
     assert [s["id"] for s in body["sources"]] == ["aws-s3-001", "rag-001"]        # order of first citation, no repeats
     assert [s["relevance"] for s in body["sources"]] == [0.9, 0.7]
     assert body["trace"] == {"candidates": 9, "selected": 3, "reranked": True, "verification": "skipped",
-                             "knowledge_base": "knowledge_base_v1", "total_entries": 62}
+                             "knowledge_base": "knowledge_base_v1", "total_entries": ENTRY_COUNT}
     s3 = body["sources"][0]
     assert s3["topic"] == "S3" and s3["category"] == "AWS Cloud" and s3["file"] == "Cloud/AWS/s3.json"
     assert s3["links"] == [{"title": "Amazon S3 Documentation", "url": "https://docs.aws.amazon.com/AmazonS3/"}]

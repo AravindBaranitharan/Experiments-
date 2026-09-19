@@ -18,6 +18,7 @@ question -> input guardrail -> vector search (Chroma) -> merge into entries -> L
 | `src/config.py` | All settings, read from environment / `.env` |
 | `src/cli.py` | Command-line chatbot |
 | `src/api.py` | HTTP API (FastAPI) used by the web UI |
+| `kb_agents/` | Agentic workflow (LangGraph) that grows the knowledge base; runs separately from the chatbot |
 | `web/` | Next.js + Tailwind chat UI (see `web/README.md`) |
 | `tests/` | `pytest` suite (runs offline; no API key needed) |
 | `docs/` | Notes for the knowledge base and the original guardrail |
@@ -45,6 +46,19 @@ python -m pytest
 uvicorn src.api:app --port 8000
 cd web && npm install && npm run dev      # http://localhost:3000
 ```
+
+## Conversation memory
+
+Follow-ups work: after "What is ECS?", "And EKS?" is understood as "What is EKS?". The API rewrites a follow-up into a standalone
+question from the recent chat (the history is sanitised and only used for that rewrite; it never reaches the answering prompt),
+and the UI shows how it was understood. Conversations are saved in the browser (`localStorage`) and listed in the left sidebar,
+so they survive closing the tab; the server stores nothing.
+
+## Knowledge base
+
+`python -m src.knowledge_base.workflow` validates the knowledge base, syncs its indexes and rebuilds the vector store.
+`python -m kb_agents run --domain aws|devops|genai` researches, writes, fact-checks and stages new entries.
+See `docs/knowledge_base.md`.
 
 ## How retrieval works
 

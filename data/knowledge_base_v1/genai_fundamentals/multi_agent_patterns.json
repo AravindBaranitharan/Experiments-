@@ -1,0 +1,37 @@
+{
+  "id": "multi-agent-patterns-001",
+  "course": "AI-Assisted DevOps",
+  "category": "Agents & Tools",
+  "topic": "Multi-Agent Patterns",
+  "subtopic": "Agent Development Lifecycle",
+  "question": "What are Multi-Agent Patterns?",
+  "answer": "Multi-Agent Patterns involve using multiple agents to perform tasks collaboratively, often leveraging frameworks like LangChain and LangGraph for building, and LangSmith for deployment and monitoring.",
+  "course_context": {
+    "module": "Agents",
+    "usage": "Teams use Multi-Agent Patterns to coordinate multiple agents for complex tasks across various stages of the agent lifecycle."
+  },
+  "key_concepts": ["agent development lifecycle", "LangChain", "LangSmith", "LangGraph"],
+  "workflow": [
+    "Build agents using LangChain and LangGraph.",
+    "Test agents with datasets and prompt engineering.",
+    "Deploy agents using LangSmith.",
+    "Monitor agents in production with LangSmith.",
+    "Improve agents based on production insights."
+  ],
+  "devops_application": "DevOps teams use LangSmith to deploy, monitor, and improve multi-agent systems in production environments.",
+  "official_evidence": [
+    {
+      "title": "Multi-Agent Patterns Documentation",
+      "url": "https://docs.langchain.com",
+      "source_type": "official_documentation"
+    }
+  ],
+  "related_topics": ["LangChain", "LangSmith", "LangGraph", "Deep Agents"],
+  "provenance": {
+    "method": "agentic-workflow",
+    "model": "gpt-4o",
+    "grounded": true,
+    "source_url": "https://docs.langchain.com",
+    "run": "kb-genai3"
+  }
+}

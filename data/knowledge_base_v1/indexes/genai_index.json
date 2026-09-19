@@ -1,23 +1,17 @@
 {
   "genai_fundamentals": [
-    { "id": "llm-001", "file": "llm.json", "topic": "LLM", "category": "Fundamentals" },
+    { "id": "llm-001", "file": "fundamentals.json", "topic": "LLM", "category": "Fundamentals" },
     { "id": "tokens-001", "file": "tokens.json", "topic": "Tokens", "category": "Fundamentals" },
-    { "id": "context-001", "file": "context_window.json", "topic": "Context Window", "category": "Fundamentals" },
-    { "id": "embeddings-001", "file": "embeddings.json", "topic": "Embeddings", "category": "Fundamentals" },
-    { "id": "rag-001", "file": "rag.json", "topic": "RAG", "category": "Fundamentals" },
+    { "id": "embeddings-001", "file": "fundamentals.json", "topic": "Embeddings", "category": "Fundamentals" },
+    { "id": "rag-001", "file": "fundamentals.json", "topic": "RAG", "category": "Fundamentals" },
     { "id": "hallucination-001", "file": "hallucination.json", "topic": "Hallucination", "category": "Safety" },
     { "id": "finetuning-001", "file": "fine_tuning.json", "topic": "Fine-tuning", "category": "Optimization" },
     { "id": "agents-001", "file": "ai_agents.json", "topic": "AI Agents", "category": "Agent Frameworks" },
     { "id": "agenticai-001", "file": "agentic_ai.json", "topic": "Agentic AI", "category": "Agent Frameworks" },
-    { "id": "agenticloop-001", "file": "agentic_loop.json", "topic": "Agentic Loop", "category": "Agent Frameworks" },
-    { "id": "planning-001", "file": "planning.json", "topic": "Planning", "category": "Agent Frameworks" },
-    { "id": "reasoning-001", "file": "reasoning.json", "topic": "Reasoning", "category": "Agent Frameworks" },
     { "id": "memory-001", "file": "memory.json", "topic": "Memory", "category": "LLM Memory" },
     { "id": "convomem-001", "file": "conversation_memory.json", "topic": "Conversation Memory", "category": "LLM Memory" },
-    { "id": "toolcalling-001", "file": "tool_calling.json", "topic": "Tool Calling", "category": "Agent Frameworks" },
     { "id": "mcp-001", "file": "mcp.json", "topic": "MCP", "category": "Safety" },
     { "id": "guardrails-001", "file": "guardrails.json", "topic": "Guardrails", "category": "Safety" },
-    { "id": "hitl-001", "file": "human_in_the_loop.json", "topic": "Human-in-the-loop", "category": "Safety" },
     { "id": "prompt-001", "file": "prompt_engineering.json", "topic": "Prompt Engineering", "category": "Prompting" },
     { "id": "cot-001", "file": "chain_of_thought.json", "topic": "Chain of Thought", "category": "Prompting" },
     { "id": "fewshot-001", "file": "few_shot.json", "topic": "Few-shot Prompting", "category": "Prompting" },
@@ -31,6 +25,15 @@
     { "id": "langgraph-001", "file": "langgraph.json", "topic": "LangGraph", "category": "Frameworks" },
     { "id": "nodesedges-001", "file": "nodes_edges.json", "topic": "Nodes and Edges", "category": "Frameworks" },
     { "id": "checkpoint-001", "file": "checkpointing.json", "topic": "Checkpointing", "category": "Frameworks" },
-    { "id": "multiagent-001", "file": "multi_agent_systems.json", "topic": "Multi-agent Systems", "category": "Frameworks" }
+    { "id": "multiagent-001", "file": "multi_agent_systems.json", "topic": "Multi-agent Systems", "category": "Frameworks" },
+    { "id": "hybrid-search-001", "file": "hybrid_search.json", "topic": "Hybrid Search", "category": "RAG & Retrieval" },
+    { "id": "prompt-injection-001", "file": "prompt_injection.json", "topic": "Prompt Injection", "category": "Prompting Techniques" },
+    { "id": "re-ranking-001", "file": "re_ranking.json", "topic": "Re-ranking", "category": "RAG & Retrieval" },
+    { "id": "structured-output-001", "file": "structured_output.json", "topic": "Structured Output", "category": "Prompting Techniques" },
+    { "id": "vector-databases-001", "file": "vector_databases.json", "topic": "Vector Databases", "category": "RAG & Retrieval" },
+    { "id": "agent-memory-001", "file": "agent_memory.json", "topic": "Agent Memory", "category": "Agents & Tools" },
+    { "id": "embedding-models-001", "file": "embedding_models.json", "topic": "Embedding Models", "category": "RAG & Retrieval" },
+    { "id": "multi-agent-patterns-001", "file": "multi_agent_patterns.json", "topic": "Multi-Agent Patterns", "category": "Agents & Tools" },
+    { "id": "system-prompts-001", "file": "system_prompts.json", "topic": "System Prompts", "category": "Prompting Techniques" }
   ]
 }

@@ -1,82 +1,76 @@
-# Knowledge Base Module (Team 1)
+# Knowledge base
 
-This module is responsible for **creating, managing, validating, and loading the knowledge base** used in the RAG (Retrieval-Augmented Generation) project. It ensures that all knowledge files (AI fundamentals, DevOps, AWS Cloud, Course Projects) are consistent, modular, and ready for retrieval and embedding.
+The chatbot answers only from the entries in `data/knowledge_base_v1/`. More (and better) entries mean better answers.
 
----
+## What is in it
 
-## 📌 Responsibilities
-- Maintain **raw knowledge base** (`data/knowledge_base.json`).
-- Organize **modular JSON files** (e.g., `aws_index.json`, `genai_index.json`, `devops_index.json`, `course_projects_index.json`).
-- Provide a **master index** (`knowledge_index.json`) for unified access.
-- Validate schema consistency across all JSON files.
-- Expose loader utilities for other teams (retrieval, guardrails, generation).
+| Folder | Domain | Entry ids look like |
+|---|---|---|
+| `Cloud/AWS/` | AWS services | `aws-s3-001` |
+| `DevOps/` | DevOps and SRE tooling and practice | `devops-helm-001` |
+| `genai_fundamentals/` | LLMs, RAG, prompting, agents, safety | `rag-001` |
+| `Workflows/` | Step-by-step how-tos for all domains | `wf-aws-deploy-container-on-aws-fargate-001` |
+| `Course_projects/` | The course's own projects | `cp-aws-chatops-001` |
+| `indexes/` | Generated lists of the entries above (do not edit by hand) | |
 
----
+Run `python -m src.knowledge_base.workflow` for the current counts.
 
-## 📂 Folder Structure
-![alt text](image.png)
+## Entry format
 
----
+One JSON file per topic, one entry per file. Copy `docs/entry_template.json`. Required: `id`, `course`, `category`, `topic`,
+`question`, `answer`. The rest (`subtopic`, `key_concepts`, `workflow`, `devops_application`, `official_evidence`,
+`related_topics`, `course_context`) is strongly recommended; the workflow warns when it is missing.
 
-## ⚙️ Files Overview
+Write like the existing entries: an `answer` of one to three precise sentences, no marketing wording, and an
+`official_evidence` link to the vendor's own documentation. Entries written by the agents also carry a `provenance`
+block (model, run, and the page they were written from).
 
-### `__init__.py`
-- Initializes the package.
-- Exposes `KnowledgeBaseLoader` and `KnowledgeBaseValidator`.
+## The workflow: keep the knowledge base healthy
 
-### `loader.py`
-- Loads raw KB and modular index files.
-- Merges them into a unified dictionary.
-- Calls the validator to ensure schema consistency.
-- Provides helper methods:
-  - `load_file(filename)`
-  - `load_index(index_file)`
-  - `merge_all()`
+```bash
+python -m src.knowledge_base.workflow                # validate -> sync indexes -> rebuild the vector store
+python -m src.knowledge_base.workflow --check        # CI mode: validate and verify the indexes; writes nothing
+python -m src.knowledge_base.workflow --self-check   # does every entry's own question retrieve it (top 3)?
+python -m src.knowledge_base.workflow --check-links  # do the documentation links respond? (needs network)
+```
 
-### `validator.py`
-- Defines a JSON schema for KB entries.
-- Uses `jsonschema` to validate required fields (`id`, `course`, `category`, `topic`, `question`, `answer`).
-- Ensures all entries are consistent before embedding.
+- **Validate**: schema and quality rules (id format, answer length, https links, duplicate ids/topics). Errors stop the run.
+- **Indexes**: `indexes/*.json` are rebuilt from the entries, which are the source of truth.
+- **Load into Chroma**: chunks and embeds every entry. The vector store is not in git; every teammate runs this once.
+- **Self-check**: an entry that its own question cannot find has a weak question or overlaps another entry.
 
----
-Usage Example
-python
-from src.knowledge_base import KnowledgeBaseLoader
+`pytest` runs the same checks on the real data (`tests/test_kb_data.py`), so a malformed entry fails the tests.
 
-# Initialize loader
-loader = KnowledgeBaseLoader(data_dir="data")
+## Growing it with the agents
 
-# Merge all KB files
-knowledge = loader.merge_all()
+`kb_agents/` is an agentic workflow (LangGraph) that runs **separately from the chatbot**. Each domain is its own run:
 
-# Access AWS topics
-aws_topics = knowledge.get("aws_index", [])
-print(f"Loaded {len(aws_topics)} AWS entries")
-## 📦 Dependencies
-Add the following to `requirements.txt`:
+```bash
+python -m kb_agents run --domain aws    --concepts 30 --workflows 8
+python -m kb_agents run --domain devops --concepts 25 --workflows 8
+python -m kb_agents run --domain genai  --concepts 20 --workflows 8
+python -m kb_agents merge --all --self-check        # after you have looked at the staged entries
+```
 
-```txt
-jsonschema==4.23.0   # Schema validation
+For each topic:
 
-# Shared dependencies across teams (already needed in pipeline)
-langchain==0.2.14
-openai==1.40.0
-tiktoken==0.7.0
-faiss-cpu==1.8.0
-python-dotenv==1.0.1
+```
+plan (new topics only) -> research (fetch the official page) -> write -> review (fact-check) -> validate -> de-duplicate -> stage
+                                                          ^_____ revise, up to twice _____|
+```
 
-✅ Integration with Other Teams
-Team 2 (Retrieval): Uses the merged KB dictionary to embed text into vector stores.
+- The **planner** proposes topics that the knowledge base does not already cover, each with an official documentation URL.
+- The **researcher** fetches that page. If it cannot (404, no text, wrong page) the topic is **rejected**: nothing is written from memory.
+- The **writer** may use only what the page says; the **reviewer** checks accuracy against the page (not completeness) and can send the draft back.
+- Deterministic gates then check the schema and quality rules and reject near-duplicates of existing entries.
+- Accepted entries land in `data/staging/<run-id>/` with a `report.json` explaining every rejection. **Nothing enters the knowledge
+  base until you run `merge`**, which never overwrites an existing file.
 
-Team 3 (Guardrails): Relies on categories (Safety, Optimization, etc.) for filtering.
+Limits worth knowing: it needs `OPENAI_API_KEY`; runs share your token rate limit, so run domains one after another; yield
+depends on the planner finding real documentation pages (topics without a stable page are rejected, not guessed); and the
+result is only as good as the source page. A person should still skim what was staged before merging.
 
-Team 4 (Generation): Uses indexed KB entries to build context and prompts.
+## Known issues
 
-📝 Best Practices
-Keep JSON files modular (one domain per file).
-
-Always update knowledge_index.json when adding new domains.
-
-Run validator.py before committing changes to ensure schema compliance.
-
-Use versioning (knowledge_base_v1, knowledge_base_v2) for major updates.
+- `llm-001` and `rag-001` exist twice (in `fundamentals.json` and in their own files). The copy in `fundamentals.json` is used;
+  the workflow warns about it. Remove one copy of each to clear the warning.
