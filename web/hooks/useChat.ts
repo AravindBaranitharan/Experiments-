@@ -26,7 +26,7 @@ export function useChat() {
       const reply = await askQuestion(question, request.signal);
       setMessages((all) => [
         ...all,
-        { id: newId(), role: "assistant", status: reply.status, text: reply.answer, sources: reply.sources, reason: reply.reason ?? undefined },
+        { id: newId(), role: "assistant", status: reply.status, text: reply.answer, sources: reply.sources, trace: reply.trace ?? undefined, reason: reply.reason ?? undefined },
       ]);
     } catch (error) {
       if ((error as Error).name === "AbortError") return;

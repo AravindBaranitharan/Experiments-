@@ -17,7 +17,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from src.config import get_settings
-from src.generation.chain import build_rag_chain
+from src.generation.chain import build_rag_pipeline
 from src.generation.prompts import NO_ANSWER
 from src.guardrails import GuardrailViolation
 from src.guardrails.input_guards import MAX_INPUT_CHARS
@@ -43,12 +43,22 @@ class Source(BaseModel):
     topic: str
     category: str
     links: list[SourceLink]
+    relevance: float | None = None    # re-ranker score scaled to 0-1; None if results were not re-ranked
+
+
+class Trace(BaseModel):
+    """How the answer was found: candidates from the vector search, and how many the model was given."""
+    candidates: int
+    selected: int
+    reranked: bool
+    verification: str = "skipped"   # passed | revised | unverified | skipped
 
 
 class ChatResponse(BaseModel):
     status: str
     answer: str
     sources: list[Source] = []
+    trace: Trace | None = None
     reason: str | None = None
 
 
@@ -59,27 +69,42 @@ def _links(entry: dict) -> list[SourceLink]:
     return links
 
 
-def cited_sources(answer: str, entries: dict[str, dict]) -> list[Source]:
-    """The knowledge-base entries the answer cites, in order of first appearance."""
+def cited_sources(answer: str, docs: list, entries: dict[str, dict]) -> list[Source]:
+    """
+    The entries the answer cites, in order of first citation. Only entries the model was actually
+    given can be sources, whatever the answer claims.
+    """
+    given = {doc.metadata["id"].lower(): doc for doc in docs}
     sources, seen = [], set()
     for match in _CITATION.finditer(answer):
         entry_id = match.group(1).lower()
-        if entry_id in entries and entry_id not in seen:
+        if entry_id in given and entry_id in entries and entry_id not in seen:
             seen.add(entry_id)
             entry = entries[entry_id]
-            sources.append(Source(id=entry["id"], topic=entry["topic"], category=entry["category"], links=_links(entry)))
+            sources.append(Source(
+                id=entry["id"], topic=entry["topic"], category=entry["category"],
+                links=_links(entry), relevance=given[entry_id].metadata.get("relevance"),
+            ))
     return sources
 
 
-def create_app(chain=None) -> FastAPI:
-    """`chain` can be injected (tests); by default the real RAG chain is built at startup."""
+def _trace(docs: list, verification: str) -> Trace | None:
+    if not docs:
+        return None
+    meta = docs[0].metadata
+    return Trace(candidates=meta.get("candidates", len(docs)), selected=len(docs),
+                 reranked=bool(meta.get("reranked")), verification=verification)
+
+
+def create_app(pipeline=None) -> FastAPI:
+    """`pipeline` (question -> {"answer", "docs"}) can be injected in tests; by default the real one is built at startup."""
     state: dict = {}
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         entries = KnowledgeBaseLoader(get_settings().data_dir).load_entries().entries
         state["entries"] = {e["id"].lower(): e for e in entries}
-        state["chain"] = chain or build_rag_chain()
+        state["pipeline"] = pipeline or build_rag_pipeline()
         yield
 
     app = FastAPI(title="Knowledge Assistant API", lifespan=lifespan)
@@ -91,16 +116,21 @@ def create_app(chain=None) -> FastAPI:
     @app.post("/api/chat", response_model=ChatResponse)
     def chat(request: ChatRequest):
         try:
-            answer = state["chain"].invoke(request.question)
+            result = state["pipeline"].invoke(request.question)
         except GuardrailViolation as blocked:
             return ChatResponse(status="blocked", answer="", reason=blocked.reason)
         except Exception:
             logger.exception("Chat request failed")
             raise HTTPException(status_code=502, detail="The assistant could not complete the request. Please try again.")
 
+        answer, docs = result["answer"], result["docs"]
         if answer.strip() == NO_ANSWER:
             return ChatResponse(status="refused", answer=answer)
-        return ChatResponse(status="answered", answer=answer, sources=cited_sources(answer, state["entries"]))
+        return ChatResponse(
+            status="answered", answer=answer,
+            sources=cited_sources(answer, docs, state["entries"]),
+            trace=_trace(docs, result.get("verification", "skipped")),
+        )
 
     return app
 

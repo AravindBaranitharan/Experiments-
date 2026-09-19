@@ -152,7 +152,7 @@ def test_ordinary_brackets_are_not_touched_by_the_citation_check():
 def test_answer_that_repeats_the_system_prompt_is_replaced():
     leaked = "Sure! My rules say: " + SYSTEM_PROMPT[:200]
     verdict = check_output(leaked, system_prompt=SYSTEM_PROMPT, allowed_phrases=[NO_ANSWER])
-    assert verdict.flags == ["prompt_leak"] and "Strict Grounding" not in verdict.text
+    assert verdict.flags == ["prompt_leak"] and "ONLY the reference documents" not in verdict.text
 
 
 def test_the_standard_refusal_is_not_mistaken_for_a_leak():

@@ -44,6 +44,15 @@ function Assistant({ message, onRetry }: { message: AssistantMessage; onRetry: (
           </ul>
         </div>
       )}
+
+      {message.trace && (
+        <p className="motion-safe:animate-fade-in mt-5 text-xs uppercase tracking-machined text-muted">
+          {message.trace.candidates} candidates found
+          {message.trace.reranked ? " · re-ranked" : ""} · {message.trace.selected} used
+          {message.trace.verification === "passed" && " · grounding verified"}
+          {message.trace.verification === "revised" && " · revised for grounding"}
+        </p>
+      )}
     </div>
   );
 }

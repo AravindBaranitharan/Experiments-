@@ -43,8 +43,18 @@ class Settings:
     # Semantic search. min_score is cosine similarity (0-1); 0.30 is calibrated for the local
     # MiniLM model (in-scope questions score >= 0.50, off-topic <= 0.20). Re-check it if you
     # switch embedding models.
-    top_k: int = field(default_factory=lambda: _int("TOP_K", 4))
+    top_k: int = field(default_factory=lambda: _int("TOP_K", 4))                # entries handed to the LLM
     min_score: float = field(default_factory=lambda: _float("MIN_SCORE", 0.30))
+
+    # Re-ranking: wide vector search -> merge chunks into whole entries -> LLM relevance score (0-10).
+    reranker: str = field(default_factory=lambda: os.getenv("RERANKER", "llm"))  # "llm" or "none"
+    rerank_model: str = field(default_factory=lambda: os.getenv("RERANK_MODEL", "gpt-4o-mini"))
+    candidate_pool: int = field(default_factory=lambda: _int("CANDIDATES", 20))  # chunks fetched before re-ranking
+    rerank_min_score: int = field(default_factory=lambda: _int("RERANK_MIN_SCORE", 5))  # entries scoring lower are dropped
+
+    # Optional groundedness check: audit each answer against its documents and rewrite it if it strays.
+    # Off by default: an A/B run (10 answers per arm) showed no reduction in unsupported claims.
+    verify_answers: bool = field(default_factory=lambda: os.getenv("VERIFY_ANSWERS", "false").lower() in ("1", "true", "yes"))
 
 
 def get_settings() -> Settings:

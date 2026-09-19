@@ -48,7 +48,7 @@ def test_a_normal_question_flows_through_retrieval_prompt_and_llm(fake_store):
     assert answer == "S3 is object storage."
     prompt = llm.prompts[0]
     assert "<document id=" in prompt and "Question: What is Amazon S3?" in prompt
-    assert "Strict Grounding" in prompt                           # the system prompt is applied
+    assert "ONLY the reference documents" in prompt                           # the system prompt is applied
 
 
 def test_blocked_input_never_reaches_retrieval_or_the_llm():
@@ -92,7 +92,7 @@ def test_only_citations_of_retrieved_documents_survive(fake_store):
 def test_an_answer_that_leaks_the_system_prompt_is_replaced(fake_store):
     llm = FakeLLM(SYSTEM_PROMPT)
     answer = build_rag_chain(llm.runnable, _retriever(fake_store)).invoke("What is Amazon S3?")
-    assert "Strict Grounding" not in answer
+    assert "ONLY the reference documents" not in answer
 
 
 def test_the_models_own_refusal_passes_through_unchanged(fake_store):

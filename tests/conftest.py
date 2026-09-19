@@ -1,3 +1,9 @@
+import os
+
+# The suite must never call a real LLM: keep the re-ranker and verifier off unless a test injects its own.
+os.environ["RERANKER"] = "none"
+os.environ["VERIFY_ANSWERS"] = "false"
+
 import dataclasses
 
 import pytest

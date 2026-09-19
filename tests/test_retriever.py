@@ -60,7 +60,7 @@ def test_retriever_returns_documents_with_scores(fake_store):
     query = _some_chunk(fake_store).page_content
     docs = get_retriever(k=2, min_score=-1, store=fake_store).invoke(query)
     assert len(docs) == 2
-    assert all(isinstance(d, Document) and "score" in d.metadata for d in docs)
+    assert all(isinstance(d, Document) and "vector_score" in d.metadata for d in docs)
 
 
 def test_empty_store_gives_a_clear_error(tmp_path):

@@ -3,7 +3,7 @@
 Answers questions about AI/GenAI, DevOps and AWS strictly from our knowledge base.
 
 ```
-question -> input guardrail -> semantic search (Chroma) -> grounding gate -> LLM -> output guardrail -> answer
+question -> input guardrail -> vector search (Chroma) -> merge into entries -> LLM re-rank -> grounding gate -> LLM -> output guardrail -> answer
 ```
 
 ## Layout
@@ -45,6 +45,24 @@ python -m pytest
 uvicorn src.api:app --port 8000
 cd web && npm install && npm run dev      # http://localhost:3000
 ```
+
+## How retrieval works
+
+1. **Vector search** fetches `CANDIDATES` (20) chunks from Chroma.
+2. **Merge**: chunks are grouped back into whole knowledge-base entries, so one topic cannot fill every slot.
+3. **Re-rank**: a small LLM judge (`RERANK_MODEL`) scores each entry 0-10 for how well it answers *this* question.
+   Entries below `RERANK_MIN_SCORE` are dropped and the best `TOP_K` are kept. If the judge fails, the vector order is used.
+4. The model receives the entries as plain notes (not JSON fields) under a strict system prompt
+   (`src/generation/prompts.py`): answer only from the documents, cite ids, plain text.
+
+Set `RERANKER=none` to disable step 3. `VERIFY_ANSWERS=true` adds an optional answer audit; it is off by default
+because an A/B test showed no reduction in unsupported claims.
+
+## Known limits
+
+- On comparison and "which should I choose" questions the model sometimes adds judgements the documents do not make
+  (for example "ideal for..."). Factual and explanatory questions were clean in our checks.
+- The knowledge base is small (62 entries); anything outside it is refused.
 
 ## How the guardrails work
 
