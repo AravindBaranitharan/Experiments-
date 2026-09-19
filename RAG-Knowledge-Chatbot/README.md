@@ -15,8 +15,26 @@ This module is responsible for **creating, managing, validating, and loading the
 
 ## 📂 Folder Structure
 ![alt text](image.png)
-
----
+AgenticAI-DevOPS/
+└── RAG-Knowledge-Chatbot/
+    ├── data/
+    │   └── knowledge_base_v1/
+    │       ├── Course_projects/          # Project-based reference material
+    │       ├── DevOps/                   # DevOps concepts, tooling, pipelines
+    │       ├── genai_fundamentals/       # GenAI / LLM foundational notes
+    │       └── indexes/                  # Pre-built retrieval indexes
+    │           ├── aws_index.json
+    │           ├── course_projects_index.json
+    │           ├── devops_index.json
+    │           ├── genai_index.json
+    │           └── knowledge_index.json  # Master / merged index
+    ├── src/
+    │   └── knowledge_base/
+    │       ├── _init_.py
+    │       ├── loader.py                 # Loads & parses knowledge base documents
+    │       └── validator.py              # Validates document + index integrity
+    ├── README.md
+    └── requirements.txt
 
 ## ⚙️ Files Overview
 
