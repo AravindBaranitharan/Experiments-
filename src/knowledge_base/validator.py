@@ -1,8 +1,9 @@
 import jsonschema
 
+
 class KnowledgeBaseValidator:
     """
-    Validates knowledge base JSON files against a schema.
+    Validates knowledge base entries against a schema.
     """
 
     schema = {
@@ -25,20 +26,26 @@ class KnowledgeBaseValidator:
         "required": ["id", "course", "category", "topic", "question", "answer"]
     }
 
-    def validate_entry(self, entry: dict) -> bool:
-        """Validate a single knowledge base entry."""
+    def error_for(self, entry: dict) -> str | None:
+        """Return a validation error message, or None if the entry is valid."""
         try:
             jsonschema.validate(instance=entry, schema=self.schema)
-            return True
+            return None
         except jsonschema.ValidationError as e:
-            print(f"Validation error in entry {entry.get('id', 'unknown')}: {e.message}")
-            return False
+            return e.message
 
-    def validate_knowledge(self, knowledge: dict) -> None:
-        """Validate all entries in the merged knowledge base."""
-        for domain, entries in knowledge.items():
-            if isinstance(entries, list):
-                for entry in entries:
-                    self.validate_entry(entry)
-            elif isinstance(entries, dict):
-                self.validate_entry(entries)
+    def validate_entry(self, entry: dict) -> bool:
+        """Validate a single knowledge base entry."""
+        error = self.error_for(entry)
+        if error:
+            print(f"Validation error in entry {entry.get('id', 'unknown')}: {error}")
+        return error is None
+
+    def validate_entries(self, entries: list[dict]) -> list[tuple[str, str]]:
+        """Validate many entries; return (entry id, error) for each invalid one."""
+        errors = []
+        for entry in entries:
+            error = self.error_for(entry)
+            if error:
+                errors.append((entry.get("id", "unknown"), error))
+        return errors
