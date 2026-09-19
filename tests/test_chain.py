@@ -123,18 +123,16 @@ def test_the_prompt_and_refusal_constant_agree():
 
 
 @pytest.fixture(scope="module")
-def real_retriever(tmp_path_factory):
+def real_retriever(tmp_path_factory, local_embeddings):
     """Real embeddings + real Chroma."""
     import dataclasses
     from src.config import get_settings
-    from src.retrieval.embeddings import LocalEmbeddings
     from src.retrieval.ingest import ingest
     from src.retrieval.vector_store import get_vectorstore
 
     settings = dataclasses.replace(get_settings(), chroma_dir=tmp_path_factory.mktemp("e2e") / "chroma")
-    embeddings = LocalEmbeddings()
-    ingest(settings, embeddings)
-    return get_retriever(store=get_vectorstore(settings, embeddings))
+    ingest(settings, local_embeddings)
+    return get_retriever(store=get_vectorstore(settings, local_embeddings))
 
 
 @pytest.mark.skipif(not LOCAL_MODEL.exists(), reason="local embedding model not downloaded yet")

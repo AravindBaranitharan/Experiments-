@@ -6,7 +6,6 @@ from langchain_core.documents import Document
 from langchain_core.embeddings import DeterministicFakeEmbedding
 
 from src.config import get_settings
-from src.retrieval.embeddings import LocalEmbeddings
 from src.retrieval.ingest import ingest
 from src.retrieval.retriever import get_retriever, load_store, search
 from src.retrieval.vector_store import get_vectorstore
@@ -79,12 +78,11 @@ def test_store_built_with_another_model_is_rejected(tmp_path):
 
 
 @pytest.fixture(scope="module")
-def real_store(tmp_path_factory):
+def real_store(tmp_path_factory, local_embeddings):
     """A store built with the real local embedding model."""
     settings = _settings(tmp_path_factory.mktemp("real"))
-    embeddings = LocalEmbeddings()
-    ingest(settings, embeddings)
-    return get_vectorstore(settings, embeddings)
+    ingest(settings, local_embeddings)
+    return get_vectorstore(settings, local_embeddings)
 
 
 @pytest.mark.skipif(not LOCAL_MODEL.exists(), reason="local embedding model not downloaded yet")
