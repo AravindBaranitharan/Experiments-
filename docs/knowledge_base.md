@@ -15,6 +15,20 @@ The chatbot answers only from the entries in `data/knowledge_base_v1/`. More (an
 
 Run `python -m src.knowledge_base.workflow` for the current counts.
 
+```
+Experiments-/
+├── data/knowledge_base_v1/
+│   ├── Cloud/AWS/             # AWS services
+│   ├── DevOps/                # DevOps and SRE tooling and practice
+│   ├── genai_fundamentals/    # LLMs, RAG, prompting, agents, safety
+│   ├── Workflows/             # step-by-step how-tos for all domains
+│   ├── Course_projects/       # the course's own projects
+│   └── indexes/               # generated lists of the entries; do not edit by hand
+├── src/knowledge_base/        # loader.py, validator.py, workflow.py
+├── kb_agents/                 # agentic workflow that grows the knowledge base
+└── docs/                      # this file and entry_template.json
+```
+
 ## Entry format
 
 One JSON file per topic, one entry per file. Copy `docs/entry_template.json`. Required: `id`, `course`, `category`, `topic`,
