@@ -12,10 +12,14 @@ def _doc(entry_id, relevance=0.9, candidates=9, reranked=True):
     return Document(page_content="passage", metadata={"id": entry_id, "relevance": relevance, "candidates": candidates, "reranked": reranked})
 
 
-def _client(reply=None, docs=(), error=None, *, guard=False, verification=None, summary=None):
-    def pipeline(question):
+received: list = []
+
+
+def _client(reply=None, docs=(), error=None, *, guard=False, verification=None, summary=None, standalone=None):
+    def pipeline(request):
+        received.append(request)
         if guard:
-            validate_input(question)          # raises GuardrailViolation exactly like the real pipeline
+            validate_input(request["question"])          # raises GuardrailViolation exactly like the real pipeline
         if error:
             raise error
         result = {"answer": reply, "docs": list(docs)}
@@ -23,6 +27,8 @@ def _client(reply=None, docs=(), error=None, *, guard=False, verification=None, 
             result["verification"] = verification
         if summary is not None:
             result["knowledge_summary"] = summary
+        result["question"] = request["question"]
+        result["standalone_question"] = standalone or request["question"]
         return result
 
     return TestClient(create_app(RunnableLambda(pipeline)))
@@ -98,3 +104,35 @@ def test_malformed_requests_are_rejected():
     with _client("x") as client:
         assert client.post("/api/chat", json={}).status_code == 422
         assert client.post("/api/chat", json={"question": "a" * 5000}).status_code == 422
+
+
+# ---------- conversation memory ----------
+
+def test_the_history_is_passed_to_the_pipeline_as_plain_turns():
+    received.clear()
+    history = [{"role": "user", "content": "What is ECS?"}, {"role": "assistant", "content": "ECS runs containers."}]
+    with _client("EKS [aws-eks-001]", [_doc("aws-eks-001")]) as client:
+        client.post("/api/chat", json={"question": "And EKS?", "history": history})
+    assert received[-1] == {"question": "And EKS?", "history": history}
+
+
+def test_history_is_optional():
+    received.clear()
+    with _client("x") as client:
+        assert client.post("/api/chat", json={"question": "What is S3?"}).status_code == 200
+    assert received[-1]["history"] == []
+
+
+def test_a_rewritten_follow_up_is_reported_and_an_unchanged_question_is_not():
+    with _client("S3 [aws-s3-001]", [_doc("aws-s3-001")], standalone="What is EKS compared with ECS?") as client:
+        assert client.post("/api/chat", json={"question": "And EKS?"}).json()["standalone_question"] == "What is EKS compared with ECS?"
+    with _client("S3 [aws-s3-001]", [_doc("aws-s3-001")]) as client:
+        assert client.post("/api/chat", json={"question": "What is S3?"}).json()["standalone_question"] is None
+
+
+def test_malformed_or_oversized_history_is_rejected():
+    with _client("x") as client:
+        assert client.post("/api/chat", json={"question": "q", "history": [{"role": "system", "content": "x"}]}).status_code == 422
+        assert client.post("/api/chat", json={"question": "q", "history": [{"role": "user", "content": "a" * 4001}]}).status_code == 422
+        too_many = [{"role": "user", "content": "q"}] * 21
+        assert client.post("/api/chat", json={"question": "q", "history": too_many}).status_code == 422

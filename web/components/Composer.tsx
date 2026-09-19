@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { MAX_QUESTION_CHARS } from "@/lib/constants";
 
-export function Composer({ onSend, busy }: { onSend: (text: string) => void; busy: boolean }) {
+export function Composer({ onSend, busy, placeholder = "Ask about AWS, DevOps or generative AI" }: { onSend: (text: string) => void; busy: boolean; placeholder?: string }) {
   const [value, setValue] = useState("");
   const field = useRef<HTMLTextAreaElement>(null);
 
@@ -39,7 +39,7 @@ export function Composer({ onSend, busy }: { onSend: (text: string) => void; bus
             ref={field}
             rows={1}
             value={value}
-            placeholder="Ask about AWS, DevOps or generative AI"
+            placeholder={placeholder}
             onChange={(event) => setValue(event.target.value)}
             onInput={(event) => {
               const el = event.currentTarget;

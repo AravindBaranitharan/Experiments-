@@ -12,6 +12,7 @@ status: "answered" | "refused" (nothing relevant in the knowledge base) | "block
 import logging
 import re
 from contextlib import asynccontextmanager
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -28,9 +29,16 @@ logger = logging.getLogger("rag.api")
 _CITATION = re.compile(r"\[((?:[a-z0-9]+-)+\d{3})\]", re.IGNORECASE)
 
 
+class HistoryTurn(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(max_length=4000)
+
+
 class ChatRequest(BaseModel):
     # Sizes are enforced by the input guardrail (which explains itself); this only bounds the payload.
     question: str = Field(max_length=MAX_INPUT_CHARS * 4)
+    # Recent conversation, used only to understand follow-ups. Untrusted: sanitised server-side.
+    history: list[HistoryTurn] = Field(default_factory=list, max_length=20)
 
 
 class SourceLink(BaseModel):
@@ -62,6 +70,7 @@ class ChatResponse(BaseModel):
     answer: str
     sources: list[Source] = []
     knowledge_summary: list[str] = []   # the model's overview of what the retrieved documents contain
+    standalone_question: str | None = None   # how a follow-up was understood; None when it needed no rewriting
     trace: Trace | None = None
     reason: str | None = None
 
@@ -121,7 +130,10 @@ def create_app(pipeline=None) -> FastAPI:
     @app.post("/api/chat", response_model=ChatResponse)
     def chat(request: ChatRequest):
         try:
-            result = state["pipeline"].invoke(request.question)
+            result = state["pipeline"].invoke({
+                "question": request.question,
+                "history": [turn.model_dump() for turn in request.history],
+            })
         except GuardrailViolation as blocked:
             return ChatResponse(status="blocked", answer="", reason=blocked.reason)
         except Exception:
@@ -129,10 +141,13 @@ def create_app(pipeline=None) -> FastAPI:
             raise HTTPException(status_code=502, detail="The assistant could not complete the request. Please try again.")
 
         answer, docs = result["answer"], result["docs"]
+        standalone = result.get("standalone_question")
+        rewritten = standalone if standalone and standalone != result.get("question") else None
+
         if answer.strip() == NO_ANSWER:
-            return ChatResponse(status="refused", answer=answer)
+            return ChatResponse(status="refused", answer=answer, standalone_question=rewritten)
         return ChatResponse(
-            status="answered", answer=answer,
+            status="answered", answer=answer, standalone_question=rewritten,
             sources=cited_sources(answer, docs, state["entries"]),
             knowledge_summary=result.get("knowledge_summary", []),
             trace=_trace(docs, result.get("verification", "skipped"), len(state["entries"])),

@@ -1,13 +1,13 @@
 import type { Source } from "@/lib/types";
 
-export function SourceCard({ source, anchorId, index }: { source: Source; anchorId: string; index: number }) {
+export function SourceCard({ source, anchorId, index, animate = true }: { source: Source; anchorId: string; index: number; animate?: boolean }) {
   const score = source.relevance === null ? null : Math.round(source.relevance * 10);
 
   return (
     <li
       id={anchorId}
-      className="motion-safe:animate-fade-up scroll-mt-6 border border-hairline bg-surface-soft p-5 transition-colors target:border-ink"
-      style={{ animationDelay: `${index * 90}ms` }}
+      className={`${animate ? "motion-safe:animate-fade-up" : ""} scroll-mt-6 border border-hairline bg-surface-soft p-5 transition-colors target:border-ink`}
+      style={animate ? { animationDelay: `${index * 90}ms` } : undefined}
     >
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs font-bold uppercase tracking-machined text-muted">{source.category}</p>

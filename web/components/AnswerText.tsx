@@ -44,9 +44,10 @@ export function parseBlocks(text: string): Block[] {
  * Renders an answer: paragraphs and lists, with [citation] tags turned into chips. Words fade in one
  * after another, so a complete reply still reads like it is being written.
  */
-export function AnswerText({ text, messageId, baseDelayMs = 0 }: { text: string; messageId: string; baseDelayMs?: number }) {
+export function AnswerText({ text, messageId, baseDelayMs = 0, animate = true }: { text: string; messageId: string; baseDelayMs?: number; animate?: boolean }) {
   let word = 0;
   const delay = () => `${baseDelayMs + Math.min(word * WORD_DELAY_MS, MAX_DELAY_MS)}ms`;
+  const fade = animate ? "motion-safe:animate-fade-in" : "";
 
   const inline = (source: string, key: string): ReactNode[] => {
     const nodes: ReactNode[] = [];
@@ -56,8 +57,8 @@ export function AnswerText({ text, messageId, baseDelayMs = 0 }: { text: string;
           <a
             key={`${key}c${partIndex}`}
             href={`#${messageId}-${part.id}`}
-            className="motion-safe:animate-fade-in mx-0.5 inline-block border border-hairline px-1.5 align-baseline text-[11px] font-bold uppercase leading-5 tracking-machined text-ink transition-colors hover:border-ink hover:bg-ink hover:text-canvas"
-            style={{ animationDelay: delay() }}
+            className={`${fade} mx-0.5 inline-block border border-hairline px-1.5 align-baseline text-[11px] font-bold uppercase leading-5 tracking-machined text-ink transition-colors hover:border-ink hover:bg-ink hover:text-canvas`}
+            style={animate ? { animationDelay: delay() } : undefined}
           >
             {part.id}
           </a>,
@@ -71,7 +72,7 @@ export function AnswerText({ text, messageId, baseDelayMs = 0 }: { text: string;
           return;
         }
         nodes.push(
-          <span key={`${key}t${partIndex}-${tokenIndex}`} className="motion-safe:animate-fade-in" style={{ animationDelay: delay() }}>
+          <span key={`${key}t${partIndex}-${tokenIndex}`} className={fade} style={animate ? { animationDelay: delay() } : undefined}>
             {token}
           </span>,
         );

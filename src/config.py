@@ -52,6 +52,9 @@ class Settings:
     candidate_pool: int = field(default_factory=lambda: _int("CANDIDATES", 20))  # chunks fetched before re-ranking
     rerank_min_score: int = field(default_factory=lambda: _int("RERANK_MIN_SCORE", 5))  # entries scoring lower are dropped
 
+    # Conversation memory: rewrites a follow-up into a standalone question before searching.
+    condense_model: str = field(default_factory=lambda: os.getenv("CONDENSE_MODEL", "gpt-4o-mini"))
+
     # Optional groundedness check: audit each answer against its documents and rewrite it if it strays.
     # Off by default: an A/B run (10 answers per arm) showed no reduction in unsupported claims.
     verify_answers: bool = field(default_factory=lambda: os.getenv("VERIFY_ANSWERS", "false").lower() in ("1", "true", "yes"))

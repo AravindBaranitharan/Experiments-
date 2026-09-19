@@ -1,14 +1,14 @@
-import type { ChatResponse } from "./types";
+import type { ChatResponse, HistoryTurn } from "./types";
 
 export class ApiError extends Error {}
 
-export async function askQuestion(question: string, signal?: AbortSignal): Promise<ChatResponse> {
+export async function askQuestion(question: string, history: HistoryTurn[], signal?: AbortSignal): Promise<ChatResponse> {
   let response: Response;
   try {
     response = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ question, history }),
       signal,
     });
   } catch (error) {

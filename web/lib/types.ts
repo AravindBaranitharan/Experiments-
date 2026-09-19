@@ -29,11 +29,21 @@ export type ChatResponse = {
   answer: string;
   sources: Source[];
   knowledge_summary: string[];
+  standalone_question: string | null;
   trace: Trace | null;
   reason: string | null;
 };
 
-export type UserMessage = { id: string; role: "user"; text: string };
+export type UserMessage = {
+  id: string;
+  role: "user";
+  text: string;
+  /** Only in memory, never saved: the message was just created, so it animates in. */
+  fresh?: boolean;
+};
+
+/** One turn of earlier conversation, sent to the API so it can understand follow-ups. */
+export type HistoryTurn = { role: "user" | "assistant"; content: string };
 
 export type AssistantMessage = {
   id: string;
@@ -47,6 +57,9 @@ export type AssistantMessage = {
   reason?: string;
   /** For "error" messages: the question to send again. */
   retry?: string;
+  /** How a follow-up was understood, when the API had to rewrite it (e.g. "And EKS?" -> "What is EKS?"). */
+  standaloneQuestion?: string;
+  fresh?: boolean;
 };
 
 export type Message = UserMessage | AssistantMessage;

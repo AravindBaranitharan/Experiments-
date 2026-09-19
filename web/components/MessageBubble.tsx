@@ -6,6 +6,7 @@ const ROLE_LABEL = "text-xs font-bold uppercase tracking-machined";
 
 function Assistant({ message, onRetry }: { message: AssistantMessage; onRetry: (question: string) => void }) {
   const { status } = message;
+  const animate = !!message.fresh;
 
   if (status === "blocked" || status === "error") {
     return (
@@ -30,8 +31,13 @@ function Assistant({ message, onRetry }: { message: AssistantMessage; onRetry: (
       <p className={`${ROLE_LABEL} ${status === "refused" ? "text-muted" : "text-ink"}`}>
         {status === "refused" ? "Not in the knowledge base" : "Assistant"}
       </p>
+      {message.standaloneQuestion && (
+        <p className="mt-2 text-xs uppercase tracking-machined text-muted">
+          Understood as <span className="normal-case tracking-normal text-body">&ldquo;{message.standaloneQuestion}&rdquo;</span>
+        </p>
+      )}
       <div className="mt-2">
-        <AnswerText text={message.text} messageId={message.id} />
+        <AnswerText text={message.text} messageId={message.id} animate={animate} />
       </div>
 
       {message.sources.length > 0 && (
@@ -46,7 +52,7 @@ function Assistant({ message, onRetry }: { message: AssistantMessage; onRetry: (
           )}
           <ul className="mt-3 grid gap-3 sm:grid-cols-2">
             {message.sources.map((source, index) => (
-              <SourceCard key={source.id} source={source} anchorId={`${message.id}-${source.id}`} index={index} />
+              <SourceCard key={source.id} source={source} anchorId={`${message.id}-${source.id}`} index={index} animate={animate} />
             ))}
           </ul>
         </section>
@@ -62,13 +68,14 @@ function Assistant({ message, onRetry }: { message: AssistantMessage; onRetry: (
               text={message.knowledgeSummary.map((line) => `- ${line}`).join("\n")}
               messageId={message.id}
               baseDelayMs={500}
+              animate={animate}
             />
           </div>
         </section>
       )}
 
       {message.trace && (
-        <p className="motion-safe:animate-fade-in mt-5 text-xs uppercase tracking-machined text-muted">
+        <p className={`${animate ? "motion-safe:animate-fade-in" : ""} mt-5 text-xs uppercase tracking-machined text-muted`}>
           {message.trace.candidates} candidates found
           {message.trace.reranked ? " · re-ranked" : ""} · {message.trace.selected} used
           {message.trace.verification === "passed" && " · grounding verified"}
@@ -82,7 +89,7 @@ function Assistant({ message, onRetry }: { message: AssistantMessage; onRetry: (
 export function MessageBubble({ message, onRetry }: { message: Message; onRetry: (question: string) => void }) {
   if (message.role === "user") {
     return (
-      <div className="motion-safe:animate-fade-up flex flex-col items-end">
+      <div className={`${message.fresh ? "motion-safe:animate-fade-up" : ""} flex flex-col items-end`}>
         <p className={`${ROLE_LABEL} mb-2 text-muted`}>You</p>
         <p className="max-w-[85%] whitespace-pre-wrap border border-hairline bg-surface-card px-5 py-4 text-base leading-relaxed text-ink">
           {message.text}
@@ -92,7 +99,7 @@ export function MessageBubble({ message, onRetry }: { message: Message; onRetry:
   }
 
   return (
-    <div className="motion-safe:animate-fade-up">
+    <div className={message.fresh ? "motion-safe:animate-fade-up" : ""}>
       <Assistant message={message} onRetry={onRetry} />
     </div>
   );
