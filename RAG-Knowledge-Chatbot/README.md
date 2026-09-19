@@ -35,7 +35,6 @@ AgenticAI-DevOPS/
     │       └── validator.py              # Validates document + index integrity
     ├── README.md
     └── requirements.txt
----
 
 ## ⚙️ Files Overview
 
