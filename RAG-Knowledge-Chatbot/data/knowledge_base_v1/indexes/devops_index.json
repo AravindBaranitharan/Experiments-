@@ -1,0 +1,10 @@
+{
+  "devops_topics": [
+    { "id": "devops-cicd-001", "file": "cicd.json", "topic": "CI/CD", "category": "DevOps" },
+    { "id": "devops-docker-001", "file": "docker.json", "topic": "Docker", "category": "DevOps" },
+    { "id": "devops-kubernetes-001", "file": "kubernetes.json", "topic": "Kubernetes", "category": "DevOps" },
+    { "id": "devops-logging-001", "file": "logging.json", "topic": "Logging", "category": "DevOps" },
+    { "id": "devops-monitoring-001", "file": "monitoring.json", "topic": "Monitoring", "category": "DevOps" },
+    { "id": "devops-terraform-001", "file": "terraform.json", "topic": "Terraform", "category": "DevOps" }
+  ]
+}
