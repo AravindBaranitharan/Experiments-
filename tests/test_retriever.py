@@ -18,15 +18,6 @@ def _settings(tmp_path):
     return dataclasses.replace(get_settings(), chroma_dir=tmp_path / "chroma")
 
 
-@pytest.fixture(scope="module")
-def fake_store(tmp_path_factory):
-    """A real Chroma store built with deterministic (non-semantic) embeddings: tests the search mechanics."""
-    settings = _settings(tmp_path_factory.mktemp("fake"))
-    embeddings = DeterministicFakeEmbedding(size=64)
-    ingest(settings, embeddings)
-    return get_vectorstore(settings, embeddings)
-
-
 def _some_chunk(store) -> Document:
     got = store.get(ids=["aws-s3-001::0"])
     return Document(page_content=got["documents"][0], metadata=got["metadatas"][0])
