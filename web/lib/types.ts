@@ -5,6 +5,8 @@ export type Source = {
   topic: string;
   category: string;
   links: SourceLink[];
+  /** The knowledge-base file the entry comes from, e.g. "genai_fundamentals/langchain.json". */
+  file: string;
   /** Re-ranker score scaled to 0-1; null when the results were not re-ranked. */
   relevance: number | null;
 };
@@ -15,6 +17,8 @@ export type Trace = {
   selected: number;
   reranked: boolean;
   verification: "passed" | "revised" | "unverified" | "skipped";
+  knowledge_base: string;
+  total_entries: number;
 };
 
 /** answered: normal reply · refused: nothing relevant in the knowledge base · blocked: input guardrail */
@@ -24,6 +28,7 @@ export type ChatResponse = {
   status: ChatStatus;
   answer: string;
   sources: Source[];
+  knowledge_summary: string[];
   trace: Trace | null;
   reason: string | null;
 };
@@ -36,6 +41,8 @@ export type AssistantMessage = {
   status: ChatStatus | "error";
   text: string;
   sources: Source[];
+  /** The model's overview of what the retrieved knowledge-base documents contain. */
+  knowledgeSummary?: string[];
   trace?: Trace;
   reason?: string;
   /** For "error" messages: the question to send again. */

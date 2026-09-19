@@ -3,8 +3,8 @@ from langchain_core.documents import Document
 
 from src.config import get_settings
 from src.generation.context_builder import format_docs_to_xml
-from src.generation.formatting import clean_answer
-from src.generation.prompts import NO_ANSWER, SYSTEM_PROMPT
+from src.generation.formatting import clean_answer, split_summary
+from src.generation.prompts import NO_ANSWER, SUMMARY_MARKER, SYSTEM_PROMPT
 from src.retrieval.passages import entry_to_passage
 from src.retrieval.retriever import _kb_entries
 
@@ -76,3 +76,24 @@ def test_the_system_prompt_states_the_rules_the_pipeline_depends_on():
     assert NO_ANSWER in SYSTEM_PROMPT                           # refusal sentence the grounding gate also returns
     for rule in ("ONLY the reference documents", "square brackets", "Plain text only", "do not refuse"):
         assert rule in SYSTEM_PROMPT
+
+
+def test_the_prompt_asks_for_complete_definitions_and_a_knowledge_summary():
+    assert "DEFINITIONS" in SYSTEM_PROMPT and "or is only a topic name" in SYSTEM_PROMPT
+    assert SUMMARY_MARKER in SYSTEM_PROMPT and "Do not write the summary when you refuse" in SYSTEM_PROMPT
+
+
+# ---------- answer / knowledge-summary split ----------
+
+def test_the_reply_is_split_into_answer_and_summary_lines():
+    reply = f"LangChain is a framework [langchain-001].\n\n{SUMMARY_MARKER}\n- First point [langchain-001]\n- Second point [langchain-001]\n"
+    assert split_summary(reply) == ("LangChain is a framework [langchain-001].", ["First point [langchain-001]", "Second point [langchain-001]"])
+
+
+def test_a_reply_without_the_marker_has_no_summary():
+    assert split_summary(NO_ANSWER) == (NO_ANSWER, [])
+    assert split_summary("Just an answer.") == ("Just an answer.", [])
+
+
+def test_summary_bullets_written_with_stars_or_dashes_are_normalised():
+    assert split_summary(f"a\n{SUMMARY_MARKER}\n* one\n-two\n\n")[1] == ["one", "two"]

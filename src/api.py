@@ -43,6 +43,7 @@ class Source(BaseModel):
     topic: str
     category: str
     links: list[SourceLink]
+    file: str = ""                    # the knowledge-base file the entry comes from
     relevance: float | None = None    # re-ranker score scaled to 0-1; None if results were not re-ranked
 
 
@@ -52,12 +53,15 @@ class Trace(BaseModel):
     selected: int
     reranked: bool
     verification: str = "skipped"   # passed | revised | unverified | skipped
+    knowledge_base: str = ""        # e.g. "knowledge_base_v1"
+    total_entries: int = 0
 
 
 class ChatResponse(BaseModel):
     status: str
     answer: str
     sources: list[Source] = []
+    knowledge_summary: list[str] = []   # the model's overview of what the retrieved documents contain
     trace: Trace | None = None
     reason: str | None = None
 
@@ -83,17 +87,18 @@ def cited_sources(answer: str, docs: list, entries: dict[str, dict]) -> list[Sou
             entry = entries[entry_id]
             sources.append(Source(
                 id=entry["id"], topic=entry["topic"], category=entry["category"],
-                links=_links(entry), relevance=given[entry_id].metadata.get("relevance"),
+                links=_links(entry), file=entry.get("source", ""), relevance=given[entry_id].metadata.get("relevance"),
             ))
     return sources
 
 
-def _trace(docs: list, verification: str) -> Trace | None:
+def _trace(docs: list, verification: str, total_entries: int) -> Trace | None:
     if not docs:
         return None
     meta = docs[0].metadata
     return Trace(candidates=meta.get("candidates", len(docs)), selected=len(docs),
-                 reranked=bool(meta.get("reranked")), verification=verification)
+                 reranked=bool(meta.get("reranked")), verification=verification,
+                 knowledge_base=get_settings().data_dir.name, total_entries=total_entries)
 
 
 def create_app(pipeline=None) -> FastAPI:
@@ -129,7 +134,8 @@ def create_app(pipeline=None) -> FastAPI:
         return ChatResponse(
             status="answered", answer=answer,
             sources=cited_sources(answer, docs, state["entries"]),
-            trace=_trace(docs, result.get("verification", "skipped")),
+            knowledge_summary=result.get("knowledge_summary", []),
+            trace=_trace(docs, result.get("verification", "skipped"), len(state["entries"])),
         )
 
     return app

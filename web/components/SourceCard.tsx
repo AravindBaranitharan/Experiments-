@@ -21,6 +21,12 @@ export function SourceCard({ source, anchorId, index }: { source: Source; anchor
       </div>
       <h3 className="mt-2 text-xl font-bold leading-tight text-ink">{source.topic}</h3>
       <p className="mt-1 text-xs uppercase tracking-machined text-muted">{source.id}</p>
+      {source.file && (
+        <p className="mt-2 break-all text-xs text-muted" title="Knowledge-base file">
+          <span className="sr-only">File: </span>
+          {source.file}
+        </p>
+      )}
 
       {source.links.length > 0 && (
         <ul className="mt-4 space-y-1.5 border-t border-hairline-strong pt-3">

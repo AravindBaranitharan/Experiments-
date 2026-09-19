@@ -12,7 +12,7 @@ def _doc(entry_id, relevance=0.9, candidates=9, reranked=True):
     return Document(page_content="passage", metadata={"id": entry_id, "relevance": relevance, "candidates": candidates, "reranked": reranked})
 
 
-def _client(reply=None, docs=(), error=None, *, guard=False, verification=None):
+def _client(reply=None, docs=(), error=None, *, guard=False, verification=None, summary=None):
     def pipeline(question):
         if guard:
             validate_input(question)          # raises GuardrailViolation exactly like the real pipeline
@@ -21,6 +21,8 @@ def _client(reply=None, docs=(), error=None, *, guard=False, verification=None):
         result = {"answer": reply, "docs": list(docs)}
         if verification:
             result["verification"] = verification
+        if summary is not None:
+            result["knowledge_summary"] = summary
         return result
 
     return TestClient(create_app(RunnableLambda(pipeline)))
@@ -41,10 +43,17 @@ def test_an_answer_comes_back_with_the_sources_it_cited_and_how_it_was_found():
     assert body["status"] == "answered" and body["answer"] == reply
     assert [s["id"] for s in body["sources"]] == ["aws-s3-001", "rag-001"]        # order of first citation, no repeats
     assert [s["relevance"] for s in body["sources"]] == [0.9, 0.7]
-    assert body["trace"] == {"candidates": 9, "selected": 3, "reranked": True, "verification": "skipped"}
+    assert body["trace"] == {"candidates": 9, "selected": 3, "reranked": True, "verification": "skipped",
+                             "knowledge_base": "knowledge_base_v1", "total_entries": 62}
     s3 = body["sources"][0]
-    assert s3["topic"] == "S3" and s3["category"] == "AWS Cloud"
+    assert s3["topic"] == "S3" and s3["category"] == "AWS Cloud" and s3["file"] == "Cloud/AWS/s3.json"
     assert s3["links"] == [{"title": "Amazon S3 Documentation", "url": "https://docs.aws.amazon.com/AmazonS3/"}]
+
+
+def test_the_knowledge_summary_is_returned_with_the_answer():
+    summary = ["S3 is object storage [aws-s3-001]", "It lists buckets and versioning [aws-s3-001]"]
+    with _client("S3 [aws-s3-001]", [_doc("aws-s3-001")], summary=summary) as client:
+        assert client.post("/api/chat", json={"question": "q"}).json()["knowledge_summary"] == summary
 
 
 def test_the_verification_status_is_reported_in_the_trace():

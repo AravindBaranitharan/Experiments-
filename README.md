@@ -55,6 +55,13 @@ cd web && npm install && npm run dev      # http://localhost:3000
 4. The model receives the entries as plain notes (not JSON fields) under a strict system prompt
    (`src/generation/prompts.py`): answer only from the documents, cite ids, plain text.
 
+5. Every answer also carries a **knowledge summary** (an overview of what the retrieved documents contain), written by
+   the model under the same rules and guardrails as the answer. Where the knowledge comes from (knowledge base, entry,
+   source file, official links) is filled in by the app from retrieval metadata, never by the model.
+
+Definition questions ("What is X exactly?", or just a topic name) get a complete definition: what it is, what it provides,
+how it works and how it is used.
+
 Set `RERANKER=none` to disable step 3. `VERIFY_ANSWERS=true` adds an optional answer audit; it is off by default
 because an A/B test showed no reduction in unsupported claims.
 

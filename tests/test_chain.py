@@ -4,8 +4,8 @@ import pytest
 from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableLambda
 
-from src.generation.chain import build_rag_chain
-from src.generation.prompts import NO_ANSWER, SYSTEM_PROMPT
+from src.generation.chain import build_rag_chain, build_rag_pipeline
+from src.generation.prompts import NO_ANSWER, SUMMARY_MARKER, SYSTEM_PROMPT
 from src.guardrails import GuardrailViolation
 from src.retrieval.retriever import get_retriever
 
@@ -98,6 +98,24 @@ def test_an_answer_that_leaks_the_system_prompt_is_replaced(fake_store):
 def test_the_models_own_refusal_passes_through_unchanged(fake_store):
     llm = FakeLLM(NO_ANSWER)
     assert build_rag_chain(llm.runnable, _retriever(fake_store)).invoke("What is Amazon S3?") == NO_ANSWER
+
+
+def test_the_summary_is_split_off_the_answer_and_guarded_like_it(fake_store):
+    retriever = _retriever(fake_store)
+    real_id = retriever.invoke("What is Amazon S3?")[0].metadata["id"]
+    reply = (f"S3 stores objects [{real_id}].\n\n{SUMMARY_MARKER}\n"
+             f"- Overview [{real_id}] with password=hunter2secret\n- Invented claim [totally-fake-001]")
+
+    out = build_rag_pipeline(FakeLLM(reply).runnable, retriever, None).invoke("What is Amazon S3?")
+
+    assert out["answer"] == f"S3 stores objects [{real_id}]." and SUMMARY_MARKER not in out["answer"]
+    summary = " ".join(out["knowledge_summary"])
+    assert real_id in summary and "hunter2secret" not in summary and "totally-fake-001" not in summary
+
+
+def test_a_refusal_has_no_summary(fake_store):
+    out = build_rag_pipeline(FakeLLM(NO_ANSWER).runnable, _retriever(fake_store), None).invoke("What is Amazon S3?")
+    assert out["answer"] == NO_ANSWER and out["knowledge_summary"] == []
 
 
 def test_the_prompt_and_refusal_constant_agree():

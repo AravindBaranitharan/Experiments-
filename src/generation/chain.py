@@ -5,7 +5,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import Runnable, RunnableBranch, RunnableLambda, RunnablePassthrough
 
 from src.generation.context_builder import format_docs_to_xml
-from src.generation.formatting import clean_answer
+from src.generation.formatting import clean_answer, split_summary
 from src.generation.llm import get_llm
 from src.generation.prompts import NO_ANSWER, SYSTEM_PROMPT, rag_prompt
 from src.generation.verify import AnswerVerifier, get_verifier
@@ -20,7 +20,7 @@ def build_rag_pipeline(
     verifier: AnswerVerifier | None = None,
 ) -> Runnable:
     """
-    question (str) -> {"question", "docs", "answer", "verification"}
+    question (str) -> {"question", "docs", "answer", "knowledge_summary", "verification"}
 
     1. Input guardrail   - raises GuardrailViolation if the question is blocked
     2. Retrieval         - vector search, chunks merged into entries, LLM re-ranking
@@ -29,7 +29,8 @@ def build_rag_pipeline(
     5. Verification      - audit the draft against the documents; rewrite it if it makes unsupported claims
     6. Output guardrail  - redact secrets, block prompt leaks, drop fabricated citations
 
-    `docs` are the entries the model was given (with relevance metadata); `answer` is the final reply;
+    `docs` are the entries the model was given (with relevance metadata); `answer` is the final reply and
+    `knowledge_summary` the model's overview (list of lines) of what those documents contain;
     `verification` is "passed", "revised", "unverified" or "skipped".
     `llm`, `retriever` and `verifier` default to the configured ones; pass your own to test or swap them.
     """
@@ -59,7 +60,8 @@ def build_rag_pipeline(
     def guard_output(state: dict) -> dict:
         allowed_ids = {doc.metadata["id"] for doc in state["docs"]}
         guarded = validate_output(state["answer"], allowed_ids, SYSTEM_PROMPT, allowed_phrases=[NO_ANSWER])
-        return {**state, "answer": guarded}
+        answer, summary = split_summary(guarded)            # both parts have been through the guardrails
+        return {**state, "answer": answer, "knowledge_summary": summary}
 
     return (
         RunnableLambda(validate_input).with_config(run_name="input_guardrail")

@@ -44,9 +44,9 @@ export function parseBlocks(text: string): Block[] {
  * Renders an answer: paragraphs and lists, with [citation] tags turned into chips. Words fade in one
  * after another, so a complete reply still reads like it is being written.
  */
-export function AnswerText({ text, messageId }: { text: string; messageId: string }) {
+export function AnswerText({ text, messageId, baseDelayMs = 0 }: { text: string; messageId: string; baseDelayMs?: number }) {
   let word = 0;
-  const delay = () => `${Math.min(word * WORD_DELAY_MS, MAX_DELAY_MS)}ms`;
+  const delay = () => `${baseDelayMs + Math.min(word * WORD_DELAY_MS, MAX_DELAY_MS)}ms`;
 
   const inline = (source: string, key: string): ReactNode[] => {
     const nodes: ReactNode[] = [];

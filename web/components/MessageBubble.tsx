@@ -35,14 +35,36 @@ function Assistant({ message, onRetry }: { message: AssistantMessage; onRetry: (
       </div>
 
       {message.sources.length > 0 && (
-        <div className="mt-6">
-          <p className={`${ROLE_LABEL} text-muted`}>Sources</p>
+        <section className="mt-8" aria-labelledby={`${message.id}-origin`}>
+          <h3 id={`${message.id}-origin`} className={`${ROLE_LABEL} text-muted`}>
+            Where this knowledge comes from
+          </h3>
+          {message.trace && message.trace.knowledge_base && (
+            <p className="mt-2 text-sm text-body">
+              {message.trace.knowledge_base.replace(/_/g, " ")} · {message.sources.length} of {message.trace.total_entries} entries cited
+            </p>
+          )}
           <ul className="mt-3 grid gap-3 sm:grid-cols-2">
             {message.sources.map((source, index) => (
               <SourceCard key={source.id} source={source} anchorId={`${message.id}-${source.id}`} index={index} />
             ))}
           </ul>
-        </div>
+        </section>
+      )}
+
+      {message.knowledgeSummary && message.knowledgeSummary.length > 0 && (
+        <section className="mt-8" aria-labelledby={`${message.id}-summary`}>
+          <h3 id={`${message.id}-summary`} className={`${ROLE_LABEL} text-muted`}>
+            What the knowledge base says
+          </h3>
+          <div className="mt-3 border-l border-hairline-strong pl-4 text-body">
+            <AnswerText
+              text={message.knowledgeSummary.map((line) => `- ${line}`).join("\n")}
+              messageId={message.id}
+              baseDelayMs={500}
+            />
+          </div>
+        </section>
       )}
 
       {message.trace && (
