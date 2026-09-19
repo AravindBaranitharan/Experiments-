@@ -12,14 +12,11 @@
     { "id": "wf-devops-manage-secrets-with-vault-001", "file": "devops_manage_secrets_with_vault.json", "topic": "Manage Secrets with HashiCorp Vault", "category": "DevOps Workflows" },
     { "id": "wf-devops-set-up-prometheus-monitoring-001", "file": "devops_set_up_prometheus_monitoring.json", "topic": "Set Up Prometheus Monitoring", "category": "DevOps Workflows" },
     { "id": "wf-genai-apply-re-ranking-technique-001", "file": "genai_apply_re_ranking_technique.json", "topic": "Apply a Re-ranking Technique", "category": "GenAI Workflows" },
-    { "id": "wf-genai-configure-hybrid-search-001", "file": "genai_configure_hybrid_search.json", "topic": "Configure Hybrid Search", "category": "GenAI Workflows" },
     { "id": "wf-genai-create-structured-output-001", "file": "genai_create_structured_output.json", "topic": "Create Structured Output", "category": "GenAI Workflows" },
     { "id": "wf-genai-evaluate-rag-system-001", "file": "genai_evaluate_rag_system.json", "topic": "Evaluate a RAG System", "category": "GenAI Workflows" },
     { "id": "wf-genai-implement-chunking-strategy-001", "file": "genai_implement_chunking_strategy.json", "topic": "Implement a Chunking Strategy", "category": "GenAI Workflows" },
     { "id": "wf-genai-implement-function-calling-001", "file": "genai_implement_function_calling.json", "topic": "Implement Function Calling", "category": "GenAI Workflows" },
     { "id": "wf-genai-rewrite-queries-001", "file": "genai_rewrite_queries.json", "topic": "Rewrite Queries", "category": "GenAI Workflows" },
-    { "id": "wf-genai-set-up-agent-memory-001", "file": "genai_set_up_agent_memory.json", "topic": "Set Up Agent Memory", "category": "GenAI Workflows" },
-    { "id": "wf-genai-create-system-prompts-001", "file": "genai_create_system_prompts.json", "topic": "Create System Prompts", "category": "GenAI Workflows" },
-    { "id": "wf-genai-implement-approximate-nearest-neighbour-index-001", "file": "genai_implement_approximate_nearest_neighbour_index.json", "topic": "Implement an Approximate Nearest-Neighbour Index", "category": "GenAI Workflows" }
+    { "id": "wf-genai-set-up-agent-memory-001", "file": "genai_set_up_agent_memory.json", "topic": "Set Up Agent Memory", "category": "GenAI Workflows" }
   ]
 }

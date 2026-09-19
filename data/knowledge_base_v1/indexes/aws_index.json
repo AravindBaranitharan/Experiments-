@@ -27,7 +27,6 @@
     { "id": "aws-app-mesh-001", "file": "app_mesh.json", "topic": "AWS App Mesh", "category": "Networking" },
     { "id": "aws-backup-001", "file": "backup.json", "topic": "AWS Backup", "category": "Storage" },
     { "id": "aws-batch-001", "file": "batch.json", "topic": "AWS Batch", "category": "Containers" },
-    { "id": "aws-chime-001", "file": "chime.json", "topic": "Amazon Chime", "category": "Messaging" },
     { "id": "aws-cloudfront-001", "file": "cloudfront.json", "topic": "AWS CloudFront", "category": "Networking" },
     { "id": "aws-cloudtrail-001", "file": "cloudtrail.json", "topic": "AWS CloudTrail", "category": "Monitoring" },
     { "id": "aws-codebuild-001", "file": "codebuild.json", "topic": "AWS CodeBuild", "category": "DevTools" },

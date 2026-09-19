@@ -31,9 +31,7 @@
     { "id": "re-ranking-001", "file": "re_ranking.json", "topic": "Re-ranking", "category": "RAG & Retrieval" },
     { "id": "structured-output-001", "file": "structured_output.json", "topic": "Structured Output", "category": "Prompting Techniques" },
     { "id": "vector-databases-001", "file": "vector_databases.json", "topic": "Vector Databases", "category": "RAG & Retrieval" },
-    { "id": "agent-memory-001", "file": "agent_memory.json", "topic": "Agent Memory", "category": "Agents & Tools" },
     { "id": "embedding-models-001", "file": "embedding_models.json", "topic": "Embedding Models", "category": "RAG & Retrieval" },
-    { "id": "multi-agent-patterns-001", "file": "multi_agent_patterns.json", "topic": "Multi-Agent Patterns", "category": "Agents & Tools" },
     { "id": "system-prompts-001", "file": "system_prompts.json", "topic": "System Prompts", "category": "Prompting Techniques" }
   ]
 }

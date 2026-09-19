@@ -43,6 +43,12 @@ def test_relevance_ignores_generic_words():
     assert is_relevant("anything", "AWS Service")           # only generic words: nothing to check
 
 
+def test_one_shared_word_is_not_enough_to_count_as_about_the_topic():
+    assert is_relevant("Agent memory lets an agent remember earlier turns.", "Agent Memory")
+    assert is_relevant("Nearest-neighbour indexes speed up approximate search.", "Approximate Nearest-Neighbour Indexes")
+    assert not is_relevant("Build agents that call tools and use vector search.", "Agent Memory")
+
+
 def _client(handler):
     return httpx.Client(transport=httpx.MockTransport(handler))
 
@@ -132,6 +138,16 @@ def test_a_well_formed_entry_has_no_problems():
 ])
 def test_entries_that_break_the_rules_are_rejected(over, expected):
     assert any(expected in p for p in entry_problems(_built(**over), "cloudfront"))
+
+
+@pytest.mark.parametrize("over", [
+    {"answer": "Agent Memory is not mentioned in the provided source documentation."},
+    {"answer": "It is described well enough here, but the documentation does not say how to start."},
+    {"workflow": ["Do one thing", "According to the source, wait", "Do another thing"]},
+    {"devops_application": "No information is given about how teams use it in the source."},
+])
+def test_entries_that_talk_about_their_source_are_rejected(over):
+    assert any("talks about its source" in p for p in entry_problems(_built(**over), "cloudfront"))
 
 
 def test_a_bad_slug_is_rejected():

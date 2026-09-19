@@ -86,6 +86,17 @@ def build_entry(domain: Domain, proposal: Proposal, draft: Draft, *, grounded: b
     return entry
 
 
+# An entry must describe its topic, not its source. These phrases mean the draft is about the page it was given.
+META_PHRASES = ("not mentioned", "not specified", "no information", "provided source", "source documentation",
+                "the source does", "the source doesn", "the source states", "according to the source",
+                "the documentation does not", "not described in")
+
+
+def talks_about_its_source(entry: dict) -> str | None:
+    text = " ".join([entry["answer"], entry["devops_application"], entry["course_context"]["usage"], *entry["workflow"]]).lower()
+    return next((p for p in META_PHRASES if p in text), None)
+
+
 def entry_problems(entry: dict, slug: str) -> list[str]:
     """Deterministic gate: schema, the workflow's quality rules, and the agents' own limits."""
     problems = []
@@ -98,6 +109,9 @@ def entry_problems(entry: dict, slug: str) -> list[str]:
         problems.append(f"schema: {schema_error}")
         return problems
     problems += [i.message for i in entry_issues(entry) if i.level == "error"]
+    meta = talks_about_its_source(entry)
+    if meta:
+        problems.append(f"the entry talks about its source instead of the topic (\"{meta}\")")
     if len(entry["answer"]) > MAX_ANSWER_CHARS:
         problems.append(f"answer longer than {MAX_ANSWER_CHARS} characters")
     if len(entry["key_concepts"]) < 3:

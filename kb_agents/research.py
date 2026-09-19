@@ -58,9 +58,10 @@ def _keywords(topic: str) -> list[str]:
 
 
 def is_relevant(text: str, topic: str) -> bool:
-    words = _keywords(topic)
+    """Every significant word of the topic must appear (singular or plural). One shared word is not enough:
+    a docs landing page mentions 'agent' and 'memory' without saying anything about agent memory."""
     lowered = text.lower()
-    return not words or any(w in lowered for w in words)
+    return all(re.sub(r"(es|s)$", "", word) in lowered for word in _keywords(topic))
 
 
 def fetch_source(url: str, topic: str, client: httpx.Client | None = None) -> Source:
