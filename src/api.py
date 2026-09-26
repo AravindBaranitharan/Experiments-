@@ -9,12 +9,13 @@ POST /api/chat   {"question": "..."}  ->  {"status", "answer", "sources", "reaso
 status: "answered" | "refused" (nothing relevant in the knowledge base) | "blocked" (input guardrail)
 """
 
+import hmac
 import logging
 import re
 from contextlib import asynccontextmanager
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
 from src.config import get_settings
@@ -110,9 +111,17 @@ def _trace(docs: list, verification: str, total_entries: int) -> Trace | None:
                  knowledge_base=get_settings().data_dir.name, total_entries=total_entries)
 
 
-def create_app(pipeline=None) -> FastAPI:
-    """`pipeline` (question -> {"answer", "docs"}) can be injected in tests; by default the real one is built at startup."""
+def create_app(pipeline=None, shared_secret: str | None = None) -> FastAPI:
+    """
+    `pipeline` (question -> {"answer", "docs"}) can be injected in tests; by default the real one is built at startup.
+    `shared_secret` defaults to API_SHARED_SECRET; when non-empty, /api/chat requires it in the X-Api-Secret header.
+    """
     state: dict = {}
+    secret = get_settings().api_shared_secret if shared_secret is None else shared_secret
+
+    def require_secret(x_api_secret: str | None = Header(default=None)) -> None:
+        if secret and not hmac.compare_digest((x_api_secret or "").encode(), secret.encode()):
+            raise HTTPException(status_code=401, detail="Unauthorized")
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -127,7 +136,7 @@ def create_app(pipeline=None) -> FastAPI:
     def health():
         return {"status": "ok", "entries": len(state["entries"]), "llm_model": get_settings().llm_model}
 
-    @app.post("/api/chat", response_model=ChatResponse)
+    @app.post("/api/chat", response_model=ChatResponse, dependencies=[Depends(require_secret)])
     def chat(request: ChatRequest):
         try:
             result = state["pipeline"].invoke({

@@ -16,6 +16,7 @@ export async function askQuestion(question: string, history: HistoryTurn[], sign
     throw new ApiError("Can't reach the assistant. Check that the API server is running.");
   }
 
+  if (response.status === 401) throw new ApiError("You are not signed in, or the site and API keys do not match. Reload the page and sign in again.");
   if (response.status === 422) throw new ApiError("That message is too long. Please shorten it.");
   if (!response.ok) throw new ApiError("The assistant couldn't complete the request. Please try again.");
   return response.json();

@@ -18,7 +18,7 @@ received: list = []
 ENTRY_COUNT = len(KnowledgeBaseLoader(get_settings().data_dir).load_entries().entries)   # grows with the knowledge base
 
 
-def _client(reply=None, docs=(), error=None, *, guard=False, verification=None, summary=None, standalone=None):
+def _client(reply=None, docs=(), error=None, *, guard=False, verification=None, summary=None, standalone=None, secret=""):
     def pipeline(request):
         received.append(request)
         if guard:
@@ -34,7 +34,7 @@ def _client(reply=None, docs=(), error=None, *, guard=False, verification=None, 
         result["standalone_question"] = standalone or request["question"]
         return result
 
-    return TestClient(create_app(RunnableLambda(pipeline)))
+    return TestClient(create_app(RunnableLambda(pipeline), shared_secret=secret))
 
 
 def test_health_reports_the_loaded_knowledge_base():
@@ -139,3 +139,34 @@ def test_malformed_or_oversized_history_is_rejected():
         assert client.post("/api/chat", json={"question": "q", "history": [{"role": "user", "content": "a" * 4001}]}).status_code == 422
         too_many = [{"role": "user", "content": "q"}] * 21
         assert client.post("/api/chat", json={"question": "q", "history": too_many}).status_code == 422
+
+
+# ---------- shared secret: the API is only for the website ----------
+
+def test_with_a_secret_configured_chat_refuses_callers_that_do_not_know_it():
+    with _client("S3 [aws-s3-001]", [_doc("aws-s3-001")], secret="s3cret") as client:
+        assert client.post("/api/chat", json={"question": "q"}).status_code == 401
+        assert client.post("/api/chat", json={"question": "q"}, headers={"X-Api-Secret": "wrong"}).status_code == 401
+        assert client.post("/api/chat", json={"question": "q"}, headers={"X-Api-Secret": "s3cret"}).status_code == 200
+
+
+def test_a_refused_call_never_reaches_the_pipeline_or_the_model():
+    received.clear()
+    with _client("x", secret="s3cret") as client:
+        client.post("/api/chat", json={"question": "q"}, headers={"X-Api-Secret": "wrong"})
+    assert received == []
+
+
+def test_health_stays_open_so_the_host_can_check_it():
+    with _client("x", secret="s3cret") as client:
+        assert client.get("/api/health").status_code == 200
+
+
+def test_without_a_secret_the_api_is_open_as_in_local_development():
+    with _client("x", secret="") as client:
+        assert client.post("/api/chat", json={"question": "q"}).status_code == 200
+
+
+def test_odd_header_values_are_simply_refused():
+    with _client("x", secret="s3cret") as client:
+        assert client.post("/api/chat", json={"question": "q"}, headers={"X-Api-Secret": b"caf\xe9\xff"}).status_code == 401

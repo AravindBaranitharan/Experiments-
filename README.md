@@ -54,6 +54,11 @@ question from the recent chat (the history is sanitised and only used for that r
 and the UI shows how it was understood. Conversations are saved in the browser (`localStorage`) and listed in the left sidebar,
 so they survive closing the tab; the server stores nothing.
 
+## Deploying
+
+`docker compose up -d --build` runs the whole thing on any Linux server (Docker, Compose and Caddy, with a password and
+automatic HTTPS). See `docs/deploy.md`.
+
 ## Knowledge base
 
 `python -m src.knowledge_base.workflow` validates the knowledge base, syncs its indexes and rebuilds the vector store.

@@ -55,6 +55,10 @@ class Settings:
     # Conversation memory: rewrites a follow-up into a standalone question before searching.
     condense_model: str = field(default_factory=lambda: os.getenv("CONDENSE_MODEL", "gpt-4o-mini"))
 
+    # When set, /api/chat only answers callers that send it as the X-Api-Secret header (the website's proxy does).
+    # Needed whenever the API has a public address, so nobody can call it directly and spend the OpenAI key.
+    api_shared_secret: str = field(default_factory=lambda: os.getenv("API_SHARED_SECRET", ""))
+
     # Optional groundedness check: audit each answer against its documents and rewrite it if it strays.
     # Off by default: an A/B run (10 answers per arm) showed no reduction in unsupported claims.
     verify_answers: bool = field(default_factory=lambda: os.getenv("VERIFY_ANSWERS", "false").lower() in ("1", "true", "yes"))
